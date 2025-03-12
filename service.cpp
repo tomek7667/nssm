@@ -1898,7 +1898,8 @@ int start_service(nssm_service_t *service) {
     if (si.dwFlags & STARTF_USESTDHANDLES) inherit_handles = true;
     unsigned long flags = service->priority & priority_mask();
     if (service->affinity) flags |= CREATE_SUSPENDED;
-    if (! service->no_console) flags |= CREATE_NEW_CONSOLE;
+    if (! service->no_console) flags |= CREATE_NEW_CONSOLE;
+
     if (! CreateProcess(0, cmd, 0, 0, inherit_handles, flags, 0, service->dir, &si, &pi)) {
       unsigned long exitcode = 3;
       unsigned long error = GetLastError();
@@ -2312,7 +2313,13 @@ int list_nssm_services(int argc, TCHAR **argv) {
 
       get_parameters(service, 0);
       /* We manage the service if we have an Application. */
-      if (including_native || service->exe[0]) _tprintf(_T("%s\n"), service->name);
+      if (including_native || service->exe[0]) {
+        if (service->displayname[0] == '\0') {
+          _tprintf(_T("%s; Exit Code=%d;\n"), service->name, service->exitcode);
+        } else {
+          _tprintf(_T("%s (%s); Exit Code=%d;\n"), service->displayname, service->name, service->exitcode);
+        }
+      }
 
       cleanup_nssm_service(service);
     }
